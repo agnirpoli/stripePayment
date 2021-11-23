@@ -4,13 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.rpay.model.CheckoutPayment;
+import com.example.rpay.model.PaymentDetail;
 import com.google.gson.Gson;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -58,11 +62,26 @@ public class StripeController {
   // create a stripe session
 		Session session = Session.create(params);
 		Map<String, String> responseData = new HashMap<>();
+		System.out.println(session);
+		Session session2 = Session.retrieve(session.getId()) ;
+		
+		
     // We get the sessionId and we putted inside the response data you can get more info from the session object
 		responseData.put("id", session.getId());
+		System.out.println(session.getId() + " && "+ session.getPaymentStatus()+" && "+ session.getPaymentIntent());
       // We can return only the sessionId as a String
 		return gson.toJson(responseData);
 	}
 
+	@GetMapping("/getPaymentDetails")
+	ResponseEntity<?> getPaymentDetails(@PathVariable String sessionId) throws StripeException {
+		Session session = Session.retrieve(sessionId) ;
+		PaymentDetail details = new PaymentDetail();
+		details.setPaymentIntentId(session.getPaymentIntent());
+		details.setPaymentStatus(session.getPaymentStatus());
+		details.setPaymentAmount(session.getAmountTotal()/100);
+		return ResponseEntity.ok(details);
+		
+	}
 	
 }
